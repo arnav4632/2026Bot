@@ -73,9 +73,13 @@ public final class Constants {
         public static final double slewRate = 3.0; //limits change to (100*k)% per second, meaning would take 1/k seconds to go from 0 to full throttle
         public static final double rotationSlewRate = 6.0;
     }
-    // public static final class Shooter {
-    //     public static final Translation2d redGoalXY = new Translation2d(11.915394, 4.034536); //meters
-    //     public static final Translation2d blueGoalXY = new Translation2d(4.625594, 4.034536); //meters
+    public static final class Shooter {
+        // Hub coordinates in meters (X, Y)
+        public static final double redGoalX = 11.915394;
+        public static final double redGoalY = 4.034536;
 
-    // }  
+        public static final double blueGoalX = 4.625594;
+        public static final double blueGoalY = 4.034536;
+
+    }
 }

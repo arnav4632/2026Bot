@@ -21,6 +21,7 @@ import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.CommandSwerveDrivetrain;
 import frc.robot.Constants.OI;
+import frc.robot.commands.PointAtHub;
 import frc.robot.commands.WheelRadiusCharacterization;
 import frc.robot.Constants.Drive;
 
@@ -97,7 +98,21 @@ public class RobotContainer {
                 // reset the field-centric heading on left bumper press(LB)
                 xboxController.leftBumper().onTrue(drivetrain.runOnce(() -> drivetrain.seedFieldCentric()));
 
-
+                //shoot fuel while held; don't have a shooter yet, so currently just point towards hub,
+                // translation (deadband + slew + scaling) is handled here and passed into the command
+                xboxController.rightTrigger().whileTrue(
+                        new PointAtHub(
+                                drivetrain,
+                                () -> {
+                                        double rawForward = -xboxController.getLeftY();
+                                        return (Math.abs(rawForward) < OI.deadband) ? 0.0 : m_xspeedLimiter.calculate(rawForward) * MaxSpeed;
+                                },
+                                () -> {
+                                        double rawLeft = -xboxController.getLeftX();
+                                        return (Math.abs(rawLeft) < OI.deadband) ? 0.0 : m_yspeedLimiter.calculate(rawLeft) * MaxSpeed;
+                                }
+                        )
+                );
 
                 //the following bindings only do anything if drive.comp is false(not in a competition settnig. that boolean has to be manually set)
                 if(!Drive.comp){
