@@ -57,7 +57,6 @@ public final class Constants {
         public static final double maxYawRate_DegPerSec = 450; //ignore visual measurements when yaw rate is greater than this value
         public static final double yawRateCoefficent = (1.0/200.0);
         public static final double stdDevPerMeter = 0.02; //Std dev increase per meter
-        public static final double maxPoseJump_Meters = 1.0; //ignore visual measurements when distance from current pose to vision pose is greater than this value
 
         // megatag1 settings, just used for yaw, set it to be very picky. will only really work when close to the tag triplets by the hub
         public static final int megaTag1MinTagsForYaw = 3;
@@ -75,11 +74,11 @@ public final class Constants {
     }
     public static final class Shooter {
         // Hub coordinates in meters (X, Y)
-        public static final double redGoalX = 11.915394;
-        public static final double redGoalY = 4.034536;
+        public static final double redGoalX = Units.inchesToMeters(469.11);
+        public static final double redGoalY = Units.inchesToMeters(158.84);
 
-        public static final double blueGoalX = 4.625594;
-        public static final double blueGoalY = 4.034536;
+        public static final double blueGoalX = Units.inchesToMeters(182.11);
+        public static final double blueGoalY = Units.inchesToMeters(158.84);
 
     }
 }
