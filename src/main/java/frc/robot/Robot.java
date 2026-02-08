@@ -31,7 +31,7 @@ public class Robot extends TimedRobot {
 		LimelightHelpers.setCameraPose_RobotSpace(
 				Vision.camName, Vision.camX, Vision.camY, Vision.camZ,
 				Vision.camRoll, Vision.camPitch, Vision.camYaw);
-
+		SmartDashboard.putData(CommandScheduler.getInstance());
 		if (Drive.comp)
 			Elastic.selectTab("Prematch");
 	}
