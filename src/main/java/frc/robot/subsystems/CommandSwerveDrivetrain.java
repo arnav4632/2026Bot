@@ -237,16 +237,6 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
                 m_hasAppliedOperatorPerspective = true;
             });
         }
-
-        // module encoder values for debugging
-        //SmartDashboard.putNumber("FL Steer Angle", getModule(0).getCurrentState().angle.getRotations());
-        //SmartDashboard.putNumber("FR Steer Angle", getModule(1).getCurrentState().angle.getRotations());
-        //SmartDashboard.putNumber("BL Steer Angle", getModule(2).getCurrentState().angle.getRotations());
-        //SmartDashboard.putNumber("BR Steer Angle", getModule(3).getCurrentState().angle.getRotations());
-        //SmartDashboard.putNumber("Yaw (deg)", getPigeon2().getYaw().getValue().in(Degrees));
-        //SmartDashboard.putNumber("Estimated X (m)", getEstimatedPose().getX());
-        //SmartDashboard.putNumber("Estimated Y (m)", getEstimatedPose().getY());
-        //SmartDashboard.putNumber("Estimated Rotation (deg)", getEstimatedPose().getRotation().getDegrees());
     }
     public void clearFieldPath() {
         m_field.getObject("path").setPoses();
@@ -280,6 +270,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         var mt2Result = LimelightHelpers.getBotPoseEstimate_wpiBlue_MegaTag2("limelight"); //grab LL estimate
         double xyStdDev = 67; //never actually used with this value, but compiler wants us to initiliaze it
         if (mt2Result != null
+                && mt2Result.tagCount > Vision.megaTag2MinTags
                 && Math.abs(yawRate) < Vision.maxYawRate_DegPerSec
                 && mt2Result.avgTagDist < Vision.maxTagDistance_Meters) {
 

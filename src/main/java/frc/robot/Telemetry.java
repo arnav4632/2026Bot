@@ -2,6 +2,7 @@ package frc.robot;
 
 import com.ctre.phoenix6.swerve.SwerveDrivetrain.SwerveDriveState;
 import edu.wpi.first.wpilibj.DataLogManager;
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
@@ -51,14 +52,6 @@ public class Telemetry {
     private final StructArrayPublisher<SwerveModulePosition> driveModulePositions = driveStateTable.getStructArrayTopic("ModulePositions", SwerveModulePosition.struct).publish();
     private final DoublePublisher driveTimestamp = driveStateTable.getDoubleTopic("Timestamp").publish();
     private final DoublePublisher driveOdometryFrequency = driveStateTable.getDoubleTopic("OdometryFrequency").publish();
-
-    /* Vision NetworkTables */
-    private final NetworkTable visionTable = inst.getTable("Vision");
-    private final StructPublisher<Pose2d> visionPosePub = visionTable.getStructTopic("Pose", Pose2d.struct).publish();
-    private final DoublePublisher visionTimestampPub = visionTable.getDoubleTopic("Timestamp").publish();
-    private final DoublePublisher visionStdDevXPub = visionTable.getDoubleTopic("StdDevX").publish();
-    private final DoublePublisher visionStdDevYPub = visionTable.getDoubleTopic("StdDevY").publish();
-    private final DoublePublisher visionStdDevThetaPub = visionTable.getDoubleTopic("StdDevTheta").publish();
 
     /** * Telemeterize the swerve drive state. 
      * Since NT logging is enabled, simply setting the NT values handles the file logging too.
