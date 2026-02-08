@@ -83,5 +83,8 @@ public final class Constants {
         public static final double blueGoalX = Units.inchesToMeters(182.11);
         public static final double blueGoalY = Units.inchesToMeters(158.84);
 
+        public static final double redXBoundary = Units.inchesToMeters(470);
+        public static final double blueXBoundary = Units.inchesToMeters(180);
+
     }
 }

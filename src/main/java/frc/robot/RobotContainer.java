@@ -32,10 +32,12 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import com.pathplanner.lib.auto.NamedCommands;
 
-public class RobotContainer {     
-        private double MaxSpeed = TunerConstants.kSpeedAt12Volts.in(MetersPerSecond); // kSpeedAt12Volts desired top speed
-        private double MaxAngularRate = RotationsPerSecond.of(0.75).in(RadiansPerSecond); // 3/4 of a rotation per second max angular velocity
-        //initilaize slew rate limiters
+public class RobotContainer {
+        private double MaxSpeed = TunerConstants.kSpeedAt12Volts.in(MetersPerSecond); // kSpeedAt12Volts desired top
+                                                                                      // speed
+        private double MaxAngularRate = RotationsPerSecond.of(0.75).in(RadiansPerSecond); // 3/4 of a rotation per
+                                                                                          // second max angular velocity
+        // initilaize slew rate limiters
         private final SlewRateLimiter xSlewLimiter = new SlewRateLimiter(OI.slewRate);
         private final SlewRateLimiter ySlewLimiter = new SlewRateLimiter(OI.slewRate);
         private final SlewRateLimiter m_rotLimiter = new SlewRateLimiter(OI.rotationSlewRate);
@@ -44,7 +46,8 @@ public class RobotContainer {
         private final SwerveRequest.FieldCentric drive = new SwerveRequest.FieldCentric()
                         .withDeadband(MaxSpeed * OI.deadband)
                         .withRotationalDeadband(MaxAngularRate * OI.deadband) // Add a deadband
-                        .withDriveRequestType(DriveRequestType.OpenLoopVoltage); // Use open-loop control for drive motors
+                        .withDriveRequestType(DriveRequestType.OpenLoopVoltage); // Use open-loop control for drive
+                                                                                 // motors
         private final SwerveRequest.SwerveDriveBrake brake = new SwerveRequest.SwerveDriveBrake();
         private final SwerveRequest.PointWheelsAt point = new SwerveRequest.PointWheelsAt();
         private final SendableChooser<Command> autoChooser;
@@ -55,7 +58,8 @@ public class RobotContainer {
                         TunerConstants.DrivetrainConstants,
                         0, // odometry update frequency (0 = use default)
                         VecBuilder.fill(Drive.odometryXYStdDevs, Drive.odometryXYStdDevs, Drive.odometryYawStdDev),
-                        VecBuilder.fill(999, 999, 999), //this is the *default* vision std dev. These values are never used because we always dynamically set it in updateVision()
+                        VecBuilder.fill(999, 999, 999), // this is the *default* vision std dev. These values are never
+                                                        // used because we always dynamically set it in updateVision()
                         TunerConstants.FrontLeft,
                         TunerConstants.FrontRight,
                         TunerConstants.BackLeft,
@@ -69,14 +73,15 @@ public class RobotContainer {
 
         private void configureBindings() {
 
-                // Drivetrain default command; runs when nothing else is using drivetrain subsystem.
+                // Drivetrain default command; runs when nothing else is using drivetrain
+                // subsystem.
                 drivetrain.setDefaultCommand(
                                 drivetrain.applyRequest(() -> drive
                                                 .withVelocityX(xSlewLimiter.calculate(-xboxController.getLeftY())
                                                                 * MaxSpeed)
                                                 .withVelocityY(ySlewLimiter.calculate(-xboxController.getLeftX())
                                                                 * MaxSpeed)
-                                                .withRotationalRate(m_rotLimiter.calculate(-xboxController.getRightX() 
+                                                .withRotationalRate(m_rotLimiter.calculate(-xboxController.getRightX()
                                                                 * MaxAngularRate))));
 
                 // Idle while the robot is disabled. This ensures the configured
@@ -85,52 +90,63 @@ public class RobotContainer {
                 RobotModeTriggers.disabled().whileTrue(
                                 drivetrain.applyRequest(() -> idle).ignoringDisable(true));
 
-                RobotModeTriggers.autonomous().onFalse(drivetrain.runOnce(drivetrain::clearFieldPath)); //clear the dashboard visualized paths once auto ends
+                RobotModeTriggers.autonomous().onFalse(drivetrain.runOnce(drivetrain::clearFieldPath)); // clear the
+                                                                                                        // dashboard
+                                                                                                        // visualized
+                                                                                                        // paths once
+                                                                                                        // auto ends
 
                 xboxController.a().whileTrue(drivetrain.applyRequest(() -> brake));
                 xboxController.b().whileTrue(drivetrain.applyRequest(() -> point
                                 .withModuleDirection(new Rotation2d(-xboxController.getLeftY(),
                                                 -xboxController.getLeftX()))));
 
-
-
                 // reset the field-centric heading on left bumper press(LB)
                 xboxController.leftBumper().onTrue(drivetrain.runOnce(() -> drivetrain.seedFieldCentric()));
 
-                //shoot fuel while held; don't have a shooter yet, so currently just point towards hub,
-                // translation (deadband + slew + scaling) is handled here and passed into the command
+                // shoot fuel while held; don't have a shooter yet, so currently just point
+                // towards hub,
+                // translation (deadband + slew + scaling) is handled here and passed into the
+                // command
                 xboxController.rightTrigger().whileTrue(
-                        new PointAtHub(
-                                drivetrain,
-                                () -> {
-                                        double rawForward = -xboxController.getLeftY();
-                                        return (Math.abs(rawForward) < OI.deadband) ? 0.0 : xSlewLimiter.calculate(rawForward) * MaxSpeed;
-                                },
-                                () -> {
-                                        double rawLeft = -xboxController.getLeftX();
-                                        return (Math.abs(rawLeft) < OI.deadband) ? 0.0 : ySlewLimiter.calculate(rawLeft) * MaxSpeed;
-                                }
-                        )
-                );
+                                new PointAtHub(
+                                                drivetrain,
+                                                xboxController,
+                                                () -> {
+                                                        double rawForward = -xboxController.getLeftY();
+                                                        return (Math.abs(rawForward) < OI.deadband) ? 0.0
+                                                                        : xSlewLimiter.calculate(rawForward) * MaxSpeed;
+                                                },
+                                                () -> {
+                                                        double rawLeft = -xboxController.getLeftX();
+                                                        return (Math.abs(rawLeft) < OI.deadband) ? 0.0
+                                                                        : ySlewLimiter.calculate(rawLeft) * MaxSpeed;
+                                                }));
 
-                //the following bindings only do anything if drive.comp is false(not in a competition settnig. that boolean has to be manually set)
-                if(!Drive.comp){
+                // the following bindings only do anything if drive.comp is false(not in a
+                // competition settnig. that boolean has to be manually set)
+                if (!Drive.comp) {
                         // Run SysId routines when holding back/start and X/Y.
                         // Note that each routine should be run exactly once in a single log.
-                        xboxController.back().and(xboxController.y()).whileTrue(drivetrain.sysIdDynamic(Direction.kForward));
-                        xboxController.back().and(xboxController.x()).whileTrue(drivetrain.sysIdDynamic(Direction.kReverse));
+                        xboxController.back().and(xboxController.y())
+                                        .whileTrue(drivetrain.sysIdDynamic(Direction.kForward));
+                        xboxController.back().and(xboxController.x())
+                                        .whileTrue(drivetrain.sysIdDynamic(Direction.kReverse));
                         xboxController.start().and(xboxController.y())
                                         .whileTrue(drivetrain.sysIdQuasistatic(Direction.kForward));
                         xboxController.start().and(xboxController.x())
                                         .whileTrue(drivetrain.sysIdQuasistatic(Direction.kReverse));
 
-                        
-                        //For testing purposes only: reset position to in front of the center of the red alliance hub, facing red alliance wall(By Apriltags 9 and 10)
+                        // For testing purposes only: reset position to in front of the center of the
+                        // red alliance hub, facing red alliance wall(By Apriltags 9 and 10)
                         xboxController.leftTrigger().onTrue(
                                         new InstantCommand(() -> drivetrain.resetPose(
-                                                        new Pose2d((492.88 + 15) * 0.0254, (158.32) * 0.0254, //0.0254 converts from in to m
-                                                                        Rotation2d.fromDegrees(180)))));      
-                        //run wheel characterization
+                                                        new Pose2d((492.88 + 15) * 0.0254, (158.32) * 0.0254, // 0.0254
+                                                                                                              // converts
+                                                                                                              // from in
+                                                                                                              // to m
+                                                                        Rotation2d.fromDegrees(180)))));
+                        // run wheel characterization
                         xboxController.leftTrigger().and(xboxController.rightTrigger())
                                         .onTrue(new WheelRadiusCharacterization(drivetrain));
                 }
@@ -140,5 +156,5 @@ public class RobotContainer {
 
         public Command getAutonomousCommand() {
                 return autoChooser.getSelected();
-        }       
+        }
 }

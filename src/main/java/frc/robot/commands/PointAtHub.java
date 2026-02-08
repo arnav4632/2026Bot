@@ -5,13 +5,15 @@ import com.ctre.phoenix6.swerve.SwerveRequest;
 
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.wpilibj.DriverStation;
-import edu.wpi.first.wpilibj.DriverStation.Alliance;
+import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj.DriverStation.Alliance;
+import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import java.util.function.DoubleSupplier;
 
 import frc.robot.Constants;
 import frc.robot.subsystems.CommandSwerveDrivetrain;
+import frc.robot.MatchInfo;
 
 import static edu.wpi.first.units.Units.*;
 
@@ -26,6 +28,7 @@ public class PointAtHub extends Command {
     private final CommandSwerveDrivetrain drivetrain;
     private final DoubleSupplier vxSupplier;
     private final DoubleSupplier vySupplier;
+    private final CommandXboxController driverController;
     private double hubX;
     private double hubY;
 
@@ -36,8 +39,9 @@ public class PointAtHub extends Command {
     // Proportional gain for heading controller (rad/s per rad of error)
     private static final double kP_angle = 3.0;
 
-    public PointAtHub(CommandSwerveDrivetrain drivetrain, DoubleSupplier vxSupplier, DoubleSupplier vySupplier) {
+    public PointAtHub(CommandSwerveDrivetrain drivetrain, CommandXboxController driverController, DoubleSupplier vxSupplier, DoubleSupplier vySupplier) {
         this.drivetrain = drivetrain;
+        this.driverController = driverController;
         this.vxSupplier = vxSupplier;
         this.vySupplier = vySupplier;
 
@@ -47,15 +51,63 @@ public class PointAtHub extends Command {
 
     @Override
     public void initialize() {
-        //check alliance and set hub coordinates accordingly
-        Alliance alliance = DriverStation.getAlliance().orElse(Alliance.Blue);
-        if (alliance == Alliance.Red) {
-            this.hubX = Constants.Shooter.redGoalX;
-            this.hubY = Constants.Shooter.redGoalY;
+        // Use MatchInfo singleton for alliance information (non-blocking)
+        MatchInfo.getInstance().ensureInitialized();
+        var optAlliance = MatchInfo.getInstance().getOwnAlliance();
+
+        if (optAlliance.isPresent()) {
+            Alliance alliance = optAlliance.get();
+            if (alliance == Alliance.Red) {
+                this.hubX = Constants.Shooter.redGoalX;
+                this.hubY = Constants.Shooter.redGoalY;
+            } else {
+                this.hubX = Constants.Shooter.blueGoalX;
+                this.hubY = Constants.Shooter.blueGoalY;
+            }
+            // Check boundaries and rumble if in neutral zone or wrong alliance zone
+            Pose2d pose = drivetrain.getEstimatedPose();
+            double x = pose.getX();
+            double blueBoundary = Constants.Shooter.blueXBoundary;
+            double redBoundary = Constants.Shooter.redXBoundary;
+
+            boolean inNeutral = (x > blueBoundary && x < redBoundary);
+            boolean inWrongZone = (alliance == Alliance.Blue && x >= redBoundary) || (alliance == Alliance.Red && x <= blueBoundary);
+
+            if (inNeutral || inWrongZone) {
+                rumbleDriver(0.5);
+            }
         } else {
-            this.hubX = Constants.Shooter.blueGoalX;
-            this.hubY = Constants.Shooter.blueGoalY;
+            // If we can't determine alliance, choose the closest hub based on current estimated pose
+            Pose2d pose = drivetrain.getEstimatedPose();
+            double bx = Constants.Shooter.blueGoalX;
+            double by = Constants.Shooter.blueGoalY;
+            double rx = Constants.Shooter.redGoalX;
+            double ry = Constants.Shooter.redGoalY;
+
+            double distToBlue = Math.hypot(pose.getX() - bx, pose.getY() - by);
+            double distToRed = Math.hypot(pose.getX() - rx, pose.getY() - ry);
+
+            if (distToRed < distToBlue) {
+                this.hubX = rx;
+                this.hubY = ry;
+            } else {
+                this.hubX = bx;
+                this.hubY = by;
+            }
         }
+    }
+
+    private void rumbleDriver(double seconds) {
+        if (driverController == null) return;
+        var hid = driverController.getHID();
+        hid.setRumble(RumbleType.kLeftRumble, 1.0);
+        hid.setRumble(RumbleType.kRightRumble, 1.0);
+        // clear rumble after a short delay on a background thread
+        new Thread(() -> {
+            try { Thread.sleep((long)(seconds * 1000)); } catch (InterruptedException ignored) {}
+            hid.setRumble(RumbleType.kLeftRumble, 0.0);
+            hid.setRumble(RumbleType.kRightRumble, 0.0);
+        }).start();
     }
 
     @Override

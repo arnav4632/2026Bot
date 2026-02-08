@@ -13,143 +13,135 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import frc.robot.util.Elastic;
-import java.util.Optional;
 
 public class Robot extends TimedRobot {
-  private Command m_autonomousCommand;
-  private final RobotContainer m_robotContainer;
+	private Command m_autonomousCommand;
+	private final RobotContainer m_robotContainer;
 
+	private final DriverTimeNotifications m_notifications = new DriverTimeNotifications();
 
-  private final DriverTimeNotifications m_notifications = new DriverTimeNotifications();
+	private int m_updateTick = 0;
 
-  public Robot() {
-    m_robotContainer = new RobotContainer();
-  }
+	public Robot() {
+		m_robotContainer = new RobotContainer();
+	}
 
-  @Override
-  public void robotInit() {
-    LimelightHelpers.setCameraPose_RobotSpace(
-        Vision.camName, Vision.camX, Vision.camY, Vision.camZ,
-        Vision.camRoll, Vision.camPitch, Vision.camYaw);
-        
-    if(Drive.comp) Elastic.selectTab("Prematch");
-  }
+	@Override
+	public void robotInit() {
+		LimelightHelpers.setCameraPose_RobotSpace(
+				Vision.camName, Vision.camX, Vision.camY, Vision.camZ,
+				Vision.camRoll, Vision.camPitch, Vision.camYaw);
 
-  @Override
-  public void robotPeriodic() {
-    CommandScheduler.getInstance().run();
-    
-    double matchTime = DriverStation.getMatchTime();
-    if(Drive.comp) {
-        SmartDashboard.putNumber("Match Time", matchTime);
-        
-        if (DriverStation.isTeleopEnabled()) {
-            m_notifications.update(matchTime);
-        }
-    }
-  }
+		if (Drive.comp)
+			Elastic.selectTab("Prematch");
+	}
 
-  @Override
-  public void autonomousInit() {
-    m_autonomousCommand = m_robotContainer.getAutonomousCommand();
-    if (m_autonomousCommand != null) {
-      CommandScheduler.getInstance().schedule(m_autonomousCommand);
-    }
-    if(Drive.comp) Elastic.selectTab("Autonomous");
-  }
+	@Override
+	public void robotPeriodic() {
+		CommandScheduler.getInstance().run();
 
-  @Override
-  public void teleopInit() {
-    if (m_autonomousCommand != null) {
-      m_autonomousCommand.cancel();
-    }
-    
-    // Cache alliance and FMS data once when teleop starts
-    m_notifications.initialize();
+		if (Drive.comp) {
+			double matchTime = DriverStation.getMatchTime();
 
-    if(Drive.comp) Elastic.selectTab("Teleop");
-  }
+			// Try to prime cached FMS/alliance data periodically (non-blocking)
+			if (m_updateTick % 10 == 0) {
+				MatchInfo.getInstance().ensureInitialized();
+			}
 
-  @Override
-  public void disabledInit() {
+			// Update display/notifications every 10 loops (200ms) while teleop
+			if (DriverStation.isTeleopEnabled() && (m_updateTick % 10 == 0)) {
+				m_notifications.update(matchTime);
+			}
+			m_updateTick++;
+		}
+	}
 
-  }
-  
-  @Override
-  public void disabledPeriodic() {
+	@Override
+	public void autonomousInit() {
+		m_autonomousCommand = m_robotContainer.getAutonomousCommand();
+		if (m_autonomousCommand != null) {
+			CommandScheduler.getInstance().schedule(m_autonomousCommand);
+		}
+		if (Drive.comp)
+			Elastic.selectTab("Autonomous");
+	}
 
-  }
+	@Override
+	public void teleopInit() {
+		if (m_autonomousCommand != null) {
+			m_autonomousCommand.cancel();
+		}
 
-  @Override
-  public void autonomousPeriodic() {
+		if(Drive.comp) {
+			// Reset and try to prime cached FMS/alliance data at teleop start.
+			MatchInfo.getInstance().reset();
+			MatchInfo.getInstance().ensureInitialized();
+			Elastic.selectTab("Teleop");
+		}
+	}
 
-  }
-  @Override
-  public void teleopPeriodic() {
+	@Override
+	public void disabledInit() {
 
-  }
+	}
 
-  @Override public void testInit() {
-    CommandScheduler.getInstance().cancelAll();
-  }
+	@Override
+	public void disabledPeriodic() {
 
+	}
 
+	@Override
+	public void autonomousPeriodic() {
 
+	}
 
-private class DriverTimeNotifications {
-    private char m_inactiveFirst = ' ';
-    private char m_ownAlliance = ' ';
-    private boolean m_fmsDataValid = false;
+	@Override
+	public void teleopPeriodic() {
 
-    public void initialize() {
-        m_fmsDataValid = false;
-        String gameData = DriverStation.getGameSpecificMessage();
-        if (gameData != null && !gameData.isEmpty()) {
-            m_inactiveFirst = gameData.toUpperCase().charAt(0);
-            m_fmsDataValid = true;
-        }
+	}
 
-        Optional<DriverStation.Alliance> alliance = DriverStation.getAlliance();
-        if (alliance.isPresent()) {
-            m_ownAlliance = (alliance.get() == DriverStation.Alliance.Red) ? 'R' : 'B';
-        }
-    }
+	@Override
+	public void testInit() {
+		CommandScheduler.getInstance().cancelAll();
+	}
 
-    public void update(double time) {
-        if (time <= 0) {
-            SmartDashboard.putBoolean("Hub/IsActive", false);
-            SmartDashboard.putNumber("Hub/Timer", 0.0);
-            return;
-        }
+	private class DriverTimeNotifications {
 
-        boolean hubIsActive = true; 
-        double timeUntilNextShift = 0.0;
+		// Hex Code Constants for Elastic
+		private final String COLOR_GREEN = "#148314cc";
+		private final String COLOR_RED = "#FF0000";
+		private final String COLOR_YELLOW = "#ffc800ff";
 
-        // 2026 REBUILT Timing Blocks
-        if (time > 130) { 
-            hubIsActive = true;
-            timeUntilNextShift = time - 130;
-        } else if (time > 105) { 
-            hubIsActive = !m_fmsDataValid || (m_ownAlliance != m_inactiveFirst);
-            timeUntilNextShift = time - 105;
-        } else if (time > 80) { 
-            hubIsActive = !m_fmsDataValid || (m_ownAlliance == m_inactiveFirst);
-            timeUntilNextShift = time - 80;
-        } else if (time > 55) { 
-            hubIsActive = !m_fmsDataValid || (m_ownAlliance != m_inactiveFirst);
-            timeUntilNextShift = time - 55;
-        } else if (time > 30) { 
-            hubIsActive = !m_fmsDataValid || (m_ownAlliance == m_inactiveFirst);
-            timeUntilNextShift = time - 30;
-        } else { 
-            hubIsActive = true; // Endgame
-            timeUntilNextShift = time;
-        }
+		public void update(double time) {
+			String hexColor;
+			double timeUntilNextShift;
 
-        // Push to Dashboard
-        SmartDashboard.putBoolean("Hub/IsActive", hubIsActive);
-        // Rounding to 1 decimal place for a cleaner countdown
-        SmartDashboard.putNumber("Hub/Timer", Math.round(timeUntilNextShift * 10.0) / 10.0);
-    }
-  }
+			// 1. Initial/End Match Buffer (Always Green)
+			if (time > 130 || time <= 30) {
+				hexColor = COLOR_GREEN;
+				timeUntilNextShift = (time > 130) ? time - 130 : Math.max(0, time);
+			} 
+			// 2. Shift Period (130s to 30s)
+			else {
+				if (!MatchInfo.getInstance().isFmsDataValid()) {
+					//no FMS data yet
+						hexColor = COLOR_YELLOW;
+						timeUntilNextShift = 0; 
+				} else {
+					// Calculate which 25s block we are in
+					int block = (int) ((130 - time) / 25);
+					timeUntilNextShift = 25 - ((130 - time) % 25);
+
+					boolean isEvenBlock = (block % 2 == 0);
+						boolean isOwnInactive = MatchInfo.getInstance().isOwnAllianceInactive();
+						boolean isActive = (isEvenBlock != isOwnInactive);
+					
+					hexColor = isActive ? COLOR_GREEN : COLOR_RED;
+				}
+			}
+
+			SmartDashboard.putString("Hub/StatusColor", hexColor);
+			SmartDashboard.putNumber("Hub/ShiftTimer", Math.round(timeUntilNextShift));
+		}
+	}
 }
