@@ -18,13 +18,6 @@ import frc.robot.MatchInfo;
 
 import static edu.wpi.first.units.Units.*;
 
-/**
- * Command that points the robot toward the hub while still allowing the
- * driver to translate the robot using the left stick. The driver's rotation
- * input is ignored and replaced with a P-controlled rotational rate that
- * turns the robot to face the hub (based on alliance-specific hub coordinates
- * in {@link Constants.Shooter} and our currently estimated pose from {@link CommandSwerveDrivetrain#getEstimatedPose()}).
- */
 public class PointAtHub extends Command {
     private final CommandSwerveDrivetrain drivetrain;
     private final DoubleSupplier vxSupplier;
@@ -33,11 +26,14 @@ public class PointAtHub extends Command {
     private double hubX;
     private double hubY;
 
-    // Maximum angular speed (match value used in RobotContainer)
-    private final double maxAngularRateRadPerSec = RotationsPerSecond.of(0.75).in(RadiansPerSecond);
-    
+    // Reuse the request object to improve performance (avoid garbage collection)
+    private final SwerveRequest.FieldCentric driveRequest = new SwerveRequest.FieldCentric()
+            .withDriveRequestType(DriveRequestType.OpenLoopVoltage);
 
-    // Proportional gain for heading controller (rad/s per rad of error)
+    // Maximum angular speed
+    private final double maxAngularRateRadPerSec = RotationsPerSecond.of(0.75).in(RadiansPerSecond);
+
+    // Proportional gain for heading controller
     private static final double kP_angle = 3.0;
 
     public PointAtHub(CommandSwerveDrivetrain drivetrain, CommandXboxController driverController, DoubleSupplier vxSupplier, DoubleSupplier vySupplier) {
@@ -49,10 +45,8 @@ public class PointAtHub extends Command {
         addRequirements(drivetrain);
     }
 
-
     @Override
     public void initialize() {
-        // Use MatchInfo singleton for alliance information (non-blocking)
         MatchInfo.getInstance().ensureInitialized();
         var optAlliance = MatchInfo.getInstance().getOwnAlliance();
 
@@ -65,7 +59,7 @@ public class PointAtHub extends Command {
                 this.hubX = Constants.Shooter.blueGoalX;
                 this.hubY = Constants.Shooter.blueGoalY;
             }
-            // Check boundaries and rumble if in neutral zone or wrong alliance zone
+
             Pose2d pose = drivetrain.getEstimatedPose();
             double x = pose.getX();
             double blueBoundary = Constants.Shooter.blueXBoundary;
@@ -78,7 +72,7 @@ public class PointAtHub extends Command {
                 rumbleDriver(0.5);
             }
         } else {
-            // If we can't determine alliance, choose the closest hub based on current estimated pose
+            // Fallback: choose closest hub
             Pose2d pose = drivetrain.getEstimatedPose();
             double bx = Constants.Shooter.blueGoalX;
             double by = Constants.Shooter.blueGoalY;
@@ -99,7 +93,6 @@ public class PointAtHub extends Command {
     }
 
     private void rumbleDriver(double seconds) {
-        // in initialize() where you want to rumble
         var hid = driverController.getHID();
         Commands.sequence(
             Commands.runOnce(() -> { hid.setRumble(RumbleType.kLeftRumble, 1.0); hid.setRumble(RumbleType.kRightRumble, 1.0); }),
@@ -110,51 +103,49 @@ public class PointAtHub extends Command {
 
     @Override
     public void execute() {
-        // Current robot pose
         Pose2d pose = drivetrain.getEstimatedPose();
 
-        // Vector from robot to hub 
-        double dx = hubX - pose.getX();
-        double dy = hubY - pose.getY();
-
-        // Desired heading (angle to hub)
-        double desiredYaw = Math.atan2(dy, dx);
-        double currentYaw = pose.getRotation().getRadians();
-
-        double angleError = desiredYaw - currentYaw;
-        angleError = MathUtil.angleModulus(angleError);
-
-        // P-controller for rotational rate
-        double rotRate = kP_angle * angleError;
-        // Saturate
-        if (rotRate > maxAngularRateRadPerSec) rotRate = maxAngularRateRadPerSec;
-        if (rotRate < -maxAngularRateRadPerSec) rotRate = -maxAngularRateRadPerSec;
-
-        // Translation supplied by RobotContainer (already processed: deadband, slew, scaling)
+        // 1. Get Inputs
         double vx = vxSupplier.getAsDouble();
         double vy = vySupplier.getAsDouble();
 
-        // Build and apply field-centric request
-        var req = new SwerveRequest.FieldCentric()
-                .withVelocityX(vx)
-                .withVelocityY(vy)
-                .withRotationalRate(rotRate)
-                .withDriveRequestType(DriveRequestType.OpenLoopVoltage);
+        // 2. Calculate vector to hub
+        double rx = hubX - pose.getX();
+        double ry = hubY - pose.getY();
+        double distSq = rx * rx + ry * ry;
 
-        drivetrain.setControl(req);
+        // Calculate Angular Feedforward (compensating for lateral translation)
+        // if you're translating laterally, you need to rotate to keep facing the hub.
+        //this will help to predict rather than just react. results in smoother rotation and better tracking, especially at higher speeds.
+        // Formula: FF = (ry * vx - rx * vy) / radius^2
+        double omegaFF = 0;
+        omegaFF = (ry * vx - rx * vy) / distSq;
+
+        // Calculate PID Feedback(compensate for heading error)
+        double desiredYaw = Math.atan2(ry, rx);
+        double currentYaw = pose.getRotation().getRadians();
+        double angleError = MathUtil.angleModulus(desiredYaw - currentYaw);
+        
+        double pidOutput = kP_angle * angleError;
+
+        // 5. Combine and Saturate
+        double totalRotRate = pidOutput + omegaFF;
+        totalRotRate = MathUtil.clamp(totalRotRate, -maxAngularRateRadPerSec, maxAngularRateRadPerSec);
+
+        // 6. Apply Request
+        drivetrain.setControl(driveRequest
+            .withVelocityX(vx)
+            .withVelocityY(vy)
+            .withRotationalRate(totalRotRate));
     }
 
     @Override
     public boolean isFinished() {
-        return false; // default command-style: never finishes on its own
+        return false;
     }
 
     @Override
     public void end(boolean interrupted) {
-        // Stop commanding speeds when command ends
         drivetrain.setControl(new SwerveRequest.ApplyRobotSpeeds());
     }
 }
-
-
-
