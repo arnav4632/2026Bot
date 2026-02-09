@@ -65,7 +65,27 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
                     // Log state with SignalLogger class
                     state -> SignalLogger.writeString("SysIdTranslation_State", state.toString())),
             new SysIdRoutine.Mechanism(
-                    output -> setControl(m_translationCharacterization.withVolts(output)),
+                    output -> {
+                        //Apply control request
+                        setControl(m_translationCharacterization.withVolts(output));
+                        //Also log SysId samples to WPILog
+                        try {
+                            if (frc.robot.Constants.Drive.log) {
+                                var t = frc.robot.Telemetry.getInstance();
+                                if (t != null) {
+                                    // voltage as volts, position from pose X (meters), velocity from chassis vx
+                                    double volts = output.in(Volts);
+                                    var pose = getEstimatedPose();
+                                    var speeds = getState().Speeds;
+                                    double posMeters = pose.getX();
+                                    double velMps = speeds.vxMetersPerSecond; // forward velocity
+                                    t.logSysIdTranslation(volts, posMeters, velMps);
+                                }
+                            }
+                        } catch (Exception e) {
+                            System.err.println("CommandSwerveDrivetrain: failed to log SysId translation: " + e.getMessage());
+                        }
+                    },
                     null,
                     this));
 
@@ -96,13 +116,26 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
                     Volts.of(Math.PI),
                     null, // Use default timeout (10 s)
                     // Log state with SignalLogger class
-                    state -> SignalLogger.writeString("SysIdRotation_State", state.toString())),
+                    state -> SignalLogger.writeString("SysIdRotation_State", state.toString())), 
             new SysIdRoutine.Mechanism(
                     output -> {
                         /* output is actually radians per second, but SysId only supports "volts" */
                         setControl(m_rotationCharacterization.withRotationalRate(output.in(Volts)));
-                        /* also log the requested output for SysId */
-                        SignalLogger.writeDouble("Rotational_Rate", output.in(Volts));
+                        // Log rotational SysId values: rotationalRate (as "voltage"), pigeon yaw (deg), pigeon yaw rate (deg/s)
+                        try {
+                            if (frc.robot.Constants.Drive.log) {
+                                var t = frc.robot.Telemetry.getInstance();
+                                if (t != null) {
+                                    double rotationalRateAsVoltage = output.in(Volts);
+                                    var pigeon = getPigeon2();
+                                    double yawDeg = pigeon.getYaw().getValueAsDouble();
+                                    double yawRateDegPerSec = pigeon.getAngularVelocityZWorld().getValueAsDouble();
+                                    t.logSysIdRotation(rotationalRateAsVoltage, yawDeg, yawRateDegPerSec);
+                                }
+                            }
+                        } catch (Exception e) {
+                            System.err.println("CommandSwerveDrivetrain: failed to log SysId rotation: " + e.getMessage());
+                        }
                     },
                     null,
                     this));
