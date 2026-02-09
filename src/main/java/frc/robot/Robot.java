@@ -42,7 +42,7 @@ public class Robot extends TimedRobot {
 
 		if (Drive.comp) {
 			double matchTime = DriverStation.getMatchTime();
-
+			SmartDashboard.putNumber("MatchTime", matchTime);
 			// Try to prime cached FMS/alliance data periodically (non-blocking)
 			if (m_updateTick % 10 == 0) {
 				MatchInfo.getInstance().ensureInitialized();

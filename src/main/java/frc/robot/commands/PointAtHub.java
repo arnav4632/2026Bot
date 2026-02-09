@@ -17,8 +17,6 @@ import frc.robot.subsystems.CommandSwerveDrivetrain;
 import frc.robot.MatchInfo;
 import frc.robot.Constants.Shooting;
 
-import static edu.wpi.first.units.Units.*;
-
 public class PointAtHub extends Command {
     private final CommandSwerveDrivetrain drivetrain;
     private final DoubleSupplier vxSupplier;
