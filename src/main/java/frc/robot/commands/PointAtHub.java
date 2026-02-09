@@ -39,7 +39,7 @@ public class PointAtHub extends Command {
     }
 
     @Override
-    public void initialize() {
+    public void initialize() { //todo: refactor this to be cleaner and readable
         MatchInfo.getInstance().ensureInitialized();
         var optAlliance = MatchInfo.getInstance().getOwnAlliance();
 
@@ -98,11 +98,11 @@ public class PointAtHub extends Command {
     public void execute() {
         Pose2d pose = drivetrain.getEstimatedPose();
 
-        // 1. Get Inputs
+        //Get Inputs so driver can move 
         double vx = vxSupplier.getAsDouble();
         double vy = vySupplier.getAsDouble();
 
-        // 2. Calculate vector to hub
+        //Calculate vector to hub
         double rx = hubX - pose.getX();
         double ry = hubY - pose.getY();
         double distSq = rx * rx + ry * ry;
@@ -121,11 +121,11 @@ public class PointAtHub extends Command {
         
         double pidOutput = Shooting.kPAngle * angleError;
 
-        // 5. Combine and Saturate
+        //Combine PID and FF, clamp to max angular rate
         double totalRotRate = pidOutput + omegaFF;
         totalRotRate = MathUtil.clamp(totalRotRate, -Drive.maxAngularRateRadPerSec, Drive.maxAngularRateRadPerSec);
 
-        // 6. Apply Request
+        //Apply rotation and translation requests
         drivetrain.setControl(driveRequest
             .withVelocityX(vx)
             .withVelocityY(vy)

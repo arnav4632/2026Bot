@@ -2,7 +2,6 @@ package frc.robot;
 
 import com.ctre.phoenix6.swerve.SwerveDrivetrain.SwerveDriveState;
 import edu.wpi.first.wpilibj.DataLogManager;
-import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
@@ -20,11 +19,10 @@ import edu.wpi.first.math.numbers.N3;
 
 public class Telemetry {
     private static Telemetry s_instance;
-
     private DoubleArrayLogEntry m_visionPoseLog;
     private DoubleArrayLogEntry m_visionStdDevLog;
     private DoubleLogEntry m_visionTimestampLog;
-
+    private DoubleLogEntry m_batteryLog;
     public static Telemetry getInstance() {
         if (s_instance == null) s_instance = new Telemetry();
         return s_instance;
@@ -38,6 +36,7 @@ public class Telemetry {
             m_visionTimestampLog = new DoubleLogEntry(log, "Vision/Timestamp");
             //tell the log to record everything in NetworkTables:
             DataLogManager.logNetworkTables(true); 
+            m_batteryLog = new DoubleLogEntry(log, "System/BatteryVoltage");
         }
     }
 
@@ -52,11 +51,11 @@ public class Telemetry {
     private final StructArrayPublisher<SwerveModulePosition> driveModulePositions = driveStateTable.getStructArrayTopic("ModulePositions", SwerveModulePosition.struct).publish();
     private final DoublePublisher driveTimestamp = driveStateTable.getDoubleTopic("Timestamp").publish();
     private final DoublePublisher driveOdometryFrequency = driveStateTable.getDoubleTopic("OdometryFrequency").publish();
-
     /** * Telemeterize the swerve drive state. 
      * Since NT logging is enabled, simply setting the NT values handles the file logging too.
      */
     public void telemeterize(SwerveDriveState state) {
+        m_batteryLog.append(edu.wpi.first.wpilibj.RobotController.getBatteryVoltage());
         drivePose.set(state.Pose);
         driveSpeeds.set(state.Speeds);
         driveModuleStates.set(state.ModuleStates);
