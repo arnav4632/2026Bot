@@ -24,7 +24,7 @@ public class PointAtHub extends Command {
     private final CommandXboxController driverController;
     private double hubX;
     private double hubY;
-
+    private final Elastic.Notification wrongZoneNotification = new Elastic.Notification(Elastic.NotificationLevel.ERROR, "Wrong Zone", "Estimated Pose is not in shooting zone. Move or manually calibrate pose.");
     private final SwerveRequest.FieldCentric driveRequest = new SwerveRequest.FieldCentric()
             .withDriveRequestType(DriveRequestType.OpenLoopVoltage);
 
@@ -40,7 +40,6 @@ public class PointAtHub extends Command {
 
     @Override
     public void initialize() {
-        Elastic.Notification wrongZoneNotification = new Elastic.Notification(Elastic.NotificationLevel.ERROR, "Wrong Zone", "Estimated Pose is not in shooting zone. Move or manually calibrate pose.");
         if (MatchInfo.getInstance().ensureInitialized()) {
             Alliance alliance = MatchInfo.getInstance().getOwnAlliance().get();
             if (alliance == Alliance.Red) {

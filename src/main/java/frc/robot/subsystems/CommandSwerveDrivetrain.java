@@ -75,7 +75,7 @@
         private final SysIdRoutine m_sysIdRoutineSteer = new SysIdRoutine(
                 new SysIdRoutine.Config(
                         null, //Use default ramp rate (1 V/s)
-                        Volts.of(7), // Use dynamic voltage of 7 V
+                        Volts.of(Drive.translationStep), // Use dynamic voltage of 7 V
                         Seconds.of(Drive.timeout),
                         state -> SignalLogger.writeString("SysIdSteer_State", state.toString())),
                 new SysIdRoutine.Mechanism(
