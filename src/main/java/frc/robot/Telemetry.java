@@ -16,7 +16,6 @@ import edu.wpi.first.util.datalog.DoubleLogEntry;
 import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
-import edu.wpi.first.util.datalog.DoubleArrayLogEntry;
 
 public class Telemetry {
     private static Telemetry s_instance;
