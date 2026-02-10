@@ -76,7 +76,7 @@
                 new SysIdRoutine.Config(
                         null, //Use default ramp rate (1 V/s)
                         Volts.of(7), // Use dynamic voltage of 7 V
-                        null, // Use default timeout (10 s)
+                        Seconds.of(Drive.timeout),
                         state -> SignalLogger.writeString("SysIdSteer_State", state.toString())),
                 new SysIdRoutine.Mechanism(
                         volts -> setControl(m_steerCharacterization.withVolts(volts)),

@@ -33,7 +33,7 @@ public final class MatchInfo {
         var alliance = DriverStation.getAlliance();
 
         if (gameData != null && !gameData.isEmpty() && alliance.isPresent()) {
-            char inactiveFirst = Character.toUpperCase(gameData.charAt(0));
+            char inactiveFirst = gameData.charAt(0);
             m_ownAlliance = alliance.get();
             char ownAllianceChar = (m_ownAlliance == DriverStation.Alliance.Red) ? 'R' : 'B';
             m_ownAllianceInactive = (ownAllianceChar == inactiveFirst);

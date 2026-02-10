@@ -7,7 +7,6 @@ import com.pathplanner.lib.config.PIDConstants;
 import com.pathplanner.lib.controllers.PPHolonomicDriveController;
 
 import edu.wpi.first.math.util.Units;
-// import edu.wpi.first.math.geometry.Translation2d;
 
 public final class Constants {
     //Prevent instantiation
@@ -32,7 +31,7 @@ public final class Constants {
         //sysID
         public static final double translationRampRate = 0.75; //for quasistatic (volts per second)
         public static final double translationStep = 4; //for dynamic (volts)
-        public static final double timeout = 10;
+        public static final double timeout = 7;
         //  assuming max speed of 4.5 m/s, feet traveled during sysID rotuine = 0.615 *timeout^2 *ramprate
 
     }
