@@ -5,6 +5,9 @@
 package frc.robot;
 
 import frc.robot.Constants.Drive;
+
+import com.ctre.phoenix6.SignalLogger;
+
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -29,6 +32,7 @@ public class Robot extends TimedRobot {
 		SmartDashboard.putData(CommandScheduler.getInstance());
 		if (Drive.comp)
 			Elastic.selectTab("Prematch");
+		SignalLogger.setPath("/media/sda1/ctre-logs/");
 	}
 
 	@Override
