@@ -17,6 +17,14 @@ import frc.robot.subsystems.CommandSwerveDrivetrain;
 import frc.robot.MatchInfo;
 import frc.robot.Constants.Shooting;
 import frc.robot.util.Elastic;
+/**
+ *  Points robot at hub, taking control of heading, but allowing driver to control translation.
+ * Uses feedforward to predict necessary rotation to stay pointed at hub while translating, and PID to correct for any heading errors.
+ * Determines which hub to point at based on alliance and estimated pose. If estimated pose is in the wrong zone, it will still point at the correct hub but will rumble the controller and send a notification to alert the driver.
+ * If estimated pose is unavailable, it will default to pointing at the closest hub.
+ * We don't have a shooter yet, so this is more of a test. Doesn't account for inherited velocity of ball. 
+ * Once we have a shooter we will add a Look up table and use ToF times robot velocity to predict where the hub will be when the ball arrives, and point there instead of the actual hub position.
+  */
 public class PointAtHub extends Command {
     private final CommandSwerveDrivetrain drivetrain;
     private final DoubleSupplier vxSupplier;
