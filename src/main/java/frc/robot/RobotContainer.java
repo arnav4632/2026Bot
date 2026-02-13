@@ -92,12 +92,6 @@ public class RobotContainer {
                 RobotModeTriggers.disabled().whileTrue(
                                 drivetrain.applyRequest(() -> idle).ignoringDisable(true));
 
-                RobotModeTriggers.autonomous().onFalse(drivetrain.runOnce(drivetrain::clearFieldPath)); // clear the
-                                                                                                        // dashboard
-                                                                                                        // visualized
-                                                                                                        // paths once
-                                                                                                        // auto ends
-
                 xboxController.a().whileTrue(drivetrain.applyRequest(() -> brake));
                 xboxController.b().whileTrue(drivetrain.applyRequest(() -> point
                                 .withModuleDirection(new Rotation2d(-xboxController.getLeftY(),

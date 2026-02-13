@@ -38,9 +38,7 @@ public class WheelRadiusCharacterization extends Command {
         this.drivetrain = drivetrain;
         addRequirements(drivetrain);
 
-        // 1. Get the drive base radius directly from TunerConstants.
-        // We use FrontLeft, assuming the robot is symmetrical or rectangular.
-        // Phoenix 6 constants (LocationX/Y) are always in Meters.
+        // 1. Get the drive base radius
         this.driveBaseRadiusMeters = Math.hypot(
             TunerConstants.FrontLeft.LocationX, 
             TunerConstants.FrontLeft.LocationY
@@ -131,9 +129,6 @@ public class WheelRadiusCharacterization extends Command {
         System.out.printf("Adjustment:     %.5f%n", adjustmentFactor);
         System.out.printf("Old Radius:     %.5f inches%n", currentRadiusInches);
         System.out.printf("NEW RADIUS:     %.5f inches%n", newWheelRadiusInches);
-        System.out.println("----------------------------------------------");
-        System.out.println("Copy/Paste this line into TunerConstants.java:");
-        System.out.printf("public static final Distance kWheelRadius = Inches.of(%.5f);%n", newWheelRadiusInches);
         System.out.println("==============================================\n");
     }
 }

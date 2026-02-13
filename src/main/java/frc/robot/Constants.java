@@ -6,6 +6,11 @@ import static edu.wpi.first.units.Units.RadiansPerSecond;
 import com.pathplanner.lib.config.PIDConstants;
 import com.pathplanner.lib.controllers.PPHolonomicDriveController;
 
+import edu.wpi.first.apriltag.AprilTagFieldLayout;
+import edu.wpi.first.apriltag.AprilTagFields;
+import edu.wpi.first.math.geometry.Rotation3d;
+import edu.wpi.first.math.geometry.Transform3d;
+import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.math.util.Units;
 
 public final class Constants {
@@ -36,11 +41,25 @@ public final class Constants {
 
     }
 
-    public static final class Vision {
-        public static final String camName = "limelight";
+    public static final class kVision {
+        /* Common constants for photonvision and LL */
+        public static final boolean USE_PHOTONVISION = false; //until we actually get the hardware set up
+        public static final boolean kDisableVisionVizualization = false;
+        
+        public static final double kYawRateCoefficent = (1.0/200.0);
+        public static final double kTagDistCoefficent = 0.3;
 
-        //offset of camera from robot center; used for changing pose estimate of where camera is to robot center
-        //proper measurement is very important, especially angle
+        public static final double kMaxTagDistance_Meters = 4.0;
+        public static final double kMaxYawRate_DegPerSec = 200; 
+
+        public static final int kMinTagsForYaw = 2;
+        public static final double kYawMaxTagDistance = 2.0;
+        public static final double kYawMaxYawRate_DegPerSec = 50.0;
+        public static final double kYawStdDev = Units.degreesToRadians(2.75);
+
+
+        /* Limelight constants */
+        public static final String LL_camName = "limelight";
         public static final double camX = 0.0;     //forward is +X
         public static final double camY = 0.0;     //right is +Y
         public static final double camZ = 0.0;     //up is +Z
@@ -48,36 +67,34 @@ public final class Constants {
         public static final double camPitch = 0.0; //nose up is +pitch
         public static final double camYaw = 0.0;   //nose right is +yaw
 
+        public static final double LL_baseXYStdDev = 0.05; //mt2 is quite a bit better than pv so lower std dev
 
-        //std dev measurements in meters
-        public static final double baseXYStdDev = 0.05;
-        //divide by number of tags visible
-        //multiply by 1+(|yawDegPerSec|*yawRateCoefficent)
-        //add avg tag distance * stdDevPerMeter
-        public static final double maxTagDistance_Meters = 4.0; //ignore visual measurements when average distance to tags greater than this value.
-        public static final double maxYawRate_DegPerSec = 450; //ignore visual measurements when yaw rate is greater than this value
-        public static final double yawRateCoefficent = (1.0/200.0);
-        public static final double stdDevPerMeter = 0.03; //Std dev increase per meter
-        public static final int megaTag2MinTags = 1; // consider changing to 2 depending on testing
+        /*  PhotonVision constants  */
+        public static final AprilTagFieldLayout kTagLayout = AprilTagFieldLayout.loadField(AprilTagFields.k2026RebuiltWelded);
 
+        public static final String kPhotonCam1Name = "Camera_Left";
+        public static final Transform3d kRobotToPhotonCam1 = new Transform3d(
+            new Translation3d(0.0, 0.2, 0.5), 
+            new Rotation3d(0, Units.degreesToRadians(-30), 0)
+        );
 
-        // megatag1 settings, just used for yaw, set it to be very picky. will only really work when close to the tag triplets by the hub
-        public static final int megaTag1MinTagsForYaw = 3;
-        public static final double megaTag1MaxDistance = 2.0;
-        public static final double megaTag1maxYawRate_DegPerSec = 50.0;
-        public static final double megaTag1YawStdDev = Units.degreesToRadians(2.0);
+        public static final String kPhotonCam2Name = "Camera_Right";
+        public static final Transform3d kRobotToPhotonCam2 = new Transform3d(
+            new Translation3d(0.0, -0.2, 0.5), 
+            new Rotation3d(0, Units.degreesToRadians(-30), 0)
+        );
 
+        public static final double PV_baseXYStdDev = 0.10;
     }
 
     public static final class OI {
         public static final double deadband = 0.10; //percentage of max speed/rotational rate. e.g. 10% deadband should be 0.10
         public static final int driverControllerPort = 0;
-        public static final double slewRate = 3.0; //limits change to (100*k)% per second, meaning would take 1/k seconds to go from requesting 0 to requesting full throttle
-        public static final double rotationSlewRate = 6.0;
+        public static final double slewRate = 6.0; //limits change to (100*k)% per second, meaning would take 1/k seconds to go from requesting 0 to requesting full throttle
+        public static final double rotationSlewRate = 10.0;
     }
     public static final class Shooting {
     // Hub coordinates in meters (X, Y)
-    // Use the existing edu.wpi.first.math.util.Units helper (returns double meters)
     public static final double redGoalX = Units.inchesToMeters(469.11);
         public static final double redGoalY = Units.inchesToMeters(158.84);
 
