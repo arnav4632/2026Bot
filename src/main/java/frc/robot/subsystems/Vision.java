@@ -13,15 +13,18 @@ import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import frc.robot.Constants.Drive;
 import frc.robot.util.LimelightHelpers;
-
+/* One camera on intake side, will be used for fuel detection during auto, otherwise apriltags
+ * Limelight on shooter side, apriltags
+ * One camera on right side, used for apriltags.
+ */
 public class Vision {
     private final CommandSwerveDrivetrain m_drivetrain;
     private final Field2d m_field;
     
-    private final PhotonCamera m_cameraLeft;
+    private final PhotonCamera m_cameraIntake;
     private final PhotonCamera m_cameraRight;
 
-    private final PhotonPoseEstimator m_estimatorLeft;
+    private final PhotonPoseEstimator m_estimatorIntake;
     private final PhotonPoseEstimator m_estimatorRight;
     
     public Vision(CommandSwerveDrivetrain drivetrain, Field2d field) {
@@ -32,10 +35,10 @@ public class Vision {
             LL_camName, camX, camY, camZ,
             camRoll, camPitch, camYaw);
         
-        m_cameraLeft = new PhotonCamera(kPhotonCam1Name);
+        m_cameraIntake = new PhotonCamera(kPhotonCam1Name);
         m_cameraRight = new PhotonCamera(kPhotonCam2Name);
 
-        m_estimatorLeft = new PhotonPoseEstimator(kTagLayout, kRobotToPhotonCam1);
+        m_estimatorIntake = new PhotonPoseEstimator(kTagLayout, kRobotToPhotonCam1);
         m_estimatorRight = new PhotonPoseEstimator(kTagLayout, kRobotToPhotonCam2);
     }
 
@@ -51,8 +54,8 @@ public class Vision {
         );
 
         if (USE_PHOTONVISION) {
-            processPhotonCamera(m_cameraLeft, m_estimatorLeft, yawRate, "PhotonLeft");
-            processPhotonCamera(m_cameraRight, m_estimatorRight, yawRate, "PhotonRight");
+            processPhotonCamera(m_cameraIntake, m_estimatorIntake, yawRate, kPhotonCam1Name);
+            processPhotonCamera(m_cameraRight, m_estimatorRight, yawRate, kPhotonCam2Name);
         }
     }
 
@@ -65,9 +68,10 @@ public class Vision {
         if (!result.hasTargets()) return;
 
         Optional<EstimatedRobotPose> visionEst = estimator.estimateCoprocMultiTagPose(result);
+        
         if (visionEst.isEmpty()) { //fall back to single tag if multi-tag unavailable; if ambiguity is still high, discard
+            if(!Drive.comp && result.targets.size() >=2) System.out.println("PV: Multi-tag pose estimation failed with multiple tags");
             if(result.getTargets().get(0).getPoseAmbiguity() < kMaxSingleTagPoseAmbiguity) visionEst = estimator.estimateLowestAmbiguityPose(result);
-            else return; 
         }
 
         if (visionEst.isPresent()) {

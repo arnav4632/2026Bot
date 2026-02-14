@@ -73,13 +73,13 @@ public final class Constants {
     /*  PhotonVision constants  */
         public static final AprilTagFieldLayout kTagLayout = AprilTagFieldLayout.loadField(AprilTagFields.k2026RebuiltWelded);
 
-        public static final String kPhotonCam1Name = "Camera_Left";
+        public static final String kPhotonCam1Name = "PV_Intake";
         public static final Transform3d kRobotToPhotonCam1 = new Transform3d(
             new Translation3d(0.0, 0.2, 0.5), 
             new Rotation3d(0, Units.degreesToRadians(-30), 0)
         );
 
-        public static final String kPhotonCam2Name = "Camera_Right";
+        public static final String kPhotonCam2Name = "PV_Left";
         public static final Transform3d kRobotToPhotonCam2 = new Transform3d(
             new Translation3d(0.0, -0.2, 0.5), 
             new Rotation3d(0, Units.degreesToRadians(-30), 0)
