@@ -56,7 +56,7 @@ public final class Constants {
         public static final int kMinTagsForYaw = 2;
         public static final double kYawMaxTagDistance = 2.0;
         public static final double kYawMaxYawRate_DegPerSec = 50.0;
-        public static final double kYawStdDev = Units.degreesToRadians(2.75);
+        public static final double kYawStdDev = Units.degreesToRadians(3);
 
 
     /* Limelight constants */
@@ -91,7 +91,7 @@ public final class Constants {
     public static final class OI {
         public static final double deadband = 0.10; //percentage of max speed/rotational rate. e.g. 10% deadband should be 0.10
         public static final int driverControllerPort = 0;
-        public static final double slewRate = 6.0; //limits change to (100*k)% per second, meaning would take 1/k seconds to go from requesting 0 to requesting full throttle
+        public static final double slewRate = 5.0; //limits change to (100*k)% per second, meaning would take 1/k seconds to go from requesting 0 to requesting full throttle
         public static final double rotationSlewRate = 10.0;
     }
     public static final class Shooting {

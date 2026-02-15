@@ -85,7 +85,7 @@ public class Vision {
                 avgDist += target.getBestCameraToTarget().getTranslation().getNorm();
             }
             avgDist /= targets.size();
-
+            
             //calc xy std dev
             double mult = (avgDist* kTagDistCoefficent + Math.abs(yawRate)* kYawRateCoefficent);
             double xyStdDev = (PV_baseXYStdDev / targets.size())*(1+mult);
@@ -130,7 +130,6 @@ public class Vision {
 
         //MegaTag1 for Yaw, strict requriements
         if (mt1Result != null && mt1Result.tagCount >= kMinTagsForYaw && mt1Result.avgTagDist < kYawMaxTagDistance) {
-
             m_drivetrain.addVisionMeasurement(
                 mt1Result.pose,
                 mt1Result.timestampSeconds,
